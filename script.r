@@ -20,5 +20,13 @@ pmcid_dvcs <- ldply(my.epmc$pmcid, tst, dvcs)
 
 # remove duplicated entries
 pmcid_dvcs <- pmcid_dvcs[!duplicated(pmcid_dvcs),]
-write.csv(pmcid_dvcs, "data/pmcid_dvcs.csv")
+
+my.df <- my.df[,c("id", "pmid", "pmcid", "DOI")]
+my.df <- my.df[my.df$pmcid %in% pmcid_dvcs$ext_id,]
+my.df <- my.df[!duplicated(my.df),]
+
+pmcid_dvcs_doi <- merge(pmcid_dvcs, my.df, by.x="ext_id", by.y="pmcid", all.x =TRUE)
+pmcid_dvcs_doi <- pmcid_dvcs_doi[,c("ext_id", "pmid", "DOI", "out")]
+write.csv(pmcid_dvcs, "data/pmcid_dvcs.csv", row.names =F)
+
 
