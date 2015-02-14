@@ -27,6 +27,6 @@ my.df <- my.df[!duplicated(my.df),]
 
 pmcid_dvcs_doi <- merge(pmcid_dvcs, my.df, by.x="ext_id", by.y="pmcid", all.x =TRUE)
 pmcid_dvcs_doi <- pmcid_dvcs_doi[,c("ext_id", "pmid", "DOI", "out")]
-write.csv(pmcid_dvcs, "data/pmcid_dvcs.csv", row.names =F)
+write.csv(pmcid_dvcs_doi, "data/pmcid_dvcs.csv", row.names =F)
 
 
