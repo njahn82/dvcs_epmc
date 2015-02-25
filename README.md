@@ -1,6 +1,6 @@
 ## Retrieving links to software repositories from Europe PMC
 
-`data/pmcid_dvcs.csv` contains 5,555 links in 3,505 life science articles for which [Europe PMC](http://europepmc.org/) holds the full text.
+`data/pmcid_dvcs.csv` contains 6,483 mentions of software repositories in 4,094 life science articles for which [Europe PMC](http://europepmc.org/) holds the full text.
 
 Hosting services examined:
 

@@ -101,4 +101,3 @@ parse_ftxt <- function(ext_id = NULL, xp = NULL) {
     out <- xpathSApply(doc, xp, xmlValue)
     data.frame(out, ext_id)
 } 
- 2

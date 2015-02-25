@@ -4,12 +4,14 @@ source(file = "R/zzz.R")
 
 # base urls to hosting services
 dvcs <- c("code.google.com", "github.com", "sourceforge.net", "bitbucket.org")
+# make queries including reference section
+dvcs.query <- paste(dvcs, " OR REF:", dvcs, sep="")
 # queried through epmc
-tt <- lapply(dvcs, epmc_search, limit = 10000)
+tt <- lapply(dvcs.query, epmc_search, limit = 10000)
 tt.df <- dplyr::bind_rows(lapply(tt, "[[", "data"))
 hits <- sapply(tt, "[[", "hits")
 tt.df$dvcs <- rep(dvcs, times = hits)
-write.csv(tt.df,"data/dvcs_epmc_md.csv")
+write.csv(tt.df,"data/dvcs_epmc_md.csv", row.names = FALSE)
 
 # fetch dvcs repos from epmc oa fulltexts
 
