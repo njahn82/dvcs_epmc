@@ -5,7 +5,7 @@ source(file = "R/zzz.R")
 # base urls to hosting services
 dvcs <- c("code.google.com", "github.com", "sourceforge.net", "bitbucket.org")
 # make queries including reference section
-dvcs.query <- paste(dvcs, " OR REF:", dvcs, sep="")
+dvcs.query <- paste(dvcs, "%20OR%20REF:", dvcs, sep="")
 # queried through epmc
 tt <- lapply(dvcs.query, epmc_search, limit = 10000)
 tt.df <- dplyr::bind_rows(lapply(tt, "[[", "data"))
@@ -16,19 +16,18 @@ write.csv(tt.df,"data/dvcs_epmc_md.csv", row.names = FALSE)
 # fetch dvcs repos from epmc oa fulltexts
 
 my.df <- read.csv("data/dvcs_epmc_md.csv", header = TRUE , sep = ",")
-my.epmc <- my.df[!is.na(my.df$pmcid),]
+my.oa <- my.df[!is.na(my.df$pmcid) & my.df$isOpenAccess == "Y",]
+# exclude PMC4317665 because it is missing in PMC OA corpus
 
-pmcid_dvcs <- ldply(my.epmc$pmcid, tst, dvcs)
+pmcid_dvcs <- llply(my.oa$pmcid, parse_ftxt, dvcs)
+dvcs_urls <- unlist(sapply(pmcid_dvcs, "[[", "out"))
 
-# remove duplicated entries
-pmcid_dvcs <- pmcid_dvcs[!duplicated(pmcid_dvcs),]
-
-my.df <- my.df[,c("id", "pmid", "pmcid", "DOI")]
-my.df <- my.df[my.df$pmcid %in% pmcid_dvcs$ext_id,]
-my.df <- my.df[!duplicated(my.df),]
-
-pmcid_dvcs_doi <- merge(pmcid_dvcs, my.df, by.x="ext_id", by.y="pmcid", all.x =TRUE)
-pmcid_dvcs_doi <- pmcid_dvcs_doi[,c("ext_id", "pmid", "DOI", "out")]
-write.csv(pmcid_dvcs_doi, "data/pmcid_dvcs.csv", row.names =F)
-
-
+# extract urls-strings
+u <- unique(stringr::str_extract(dvcs_urls, "http[[:graph:]]*"))
+u <- u[!is.na(u)]
+# minimum three slashes
+tt <- llply(urls, httr::parse_url, .inform = T)
+urls.mat <- do.call("rbind", tt)
+# only host name and path
+urls.mat <- urls.mat[,c("hostname", "path")]
+write.csv(urls.mat, "data/urls_parsed.csv")

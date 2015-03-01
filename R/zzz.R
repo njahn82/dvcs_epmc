@@ -37,7 +37,7 @@ rebi_GET <- function(path = NULL, ...) {
     # call api
     req <- httr::GET(u, ...)
     # check for http status
-    rebi_check(req)
+    warn_for_status(req)
     # load xml into r
     doc <- rebi_parse(req)
     if (!exists("doc")) 
@@ -81,23 +81,24 @@ rebi_hits <- function(doc) {
 
 ### fulltext xml functions
 
-tst <- function(ext_id, dvcs) {
-    tryCatch(ldply(ext_id, parse_ftxt, dvcs), error = function(err) {
-        warning(conditionMessage(err))
-        NULL
-    })
-}
-
 parse_ftxt <- function(ext_id = NULL, xp = NULL) {
     if (is.null(ext_id)) 
         stop("No ext_id provided")
     path <- sprintf("%s/fullTextXML", ext_id)
     doc <- rebi_GET(path = path)
     
-    if (is.null(xp)) 
-        stop("No xpath expression provided")
     xp <- sprintf("//*[contains(text(),'%s')]", xp)
     
     out <- xpathSApply(doc, xp, xmlValue)
-    data.frame(out, ext_id)
-} 
+    if(length(out) == 0) 
+      out <- foo(doc)
+    
+    list(ext_id = ext_id, out = out)
+}
+
+foo <- function(x){
+  xp <- paste0("//ref-list//*[contains(., '", dvcs, "')] | //body//*[contains(., '", dvcs, "')]")
+  out <- xpathSApply(x, xp, xmlValue)
+  out
+}
+    
