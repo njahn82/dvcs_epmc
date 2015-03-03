@@ -31,3 +31,38 @@ urls.mat <- do.call("rbind", tt)
 # only host name and path
 urls.mat <- urls.mat[,c("hostname", "path")]
 write.csv(urls.mat, "data/urls_parsed.csv")
+
+# check github for metadata on software repos
+
+urls.df <- as.data.frame(urls.mat)
+urls.github <- urls.df[urls.df$hostname == "github.com",]
+
+tmp <- stringr::str_split_fixed(as.character(urls.github$path), "/", 2)
+tmp <- cbind(tmp, stringr::str_split_fixed(tmp[,2], "/", 2))
+
+user <- tmp[,1]
+repo <- tmp[,3]
+
+path <- paste(user, repo, sep = "/")
+
+tt <- lapply(path, github_GET)
+tt.df <-  dplyr::bind_rows(lapply(tt, "[[", "data"))
+
+write.csv(tt.df, "data/github_parsed.csv")
+
+## compare with lagotto list
+
+gh_ls <- read.csv("data/github_repos.csv", header = T, sep =",")
+pmc_ls <- read.csv("data/github_parsed.csv", header = T, sep =",")
+pmc_ls$url <- paste0("https://github.com/", pmc_ls$full_name)
+pmc_ls <- pmc_ls[!duplicated(pmc_ls$url),]
+gh_new <- pmc_ls[!pmc_ls$url %in% gh_ls$url,]
+
+gh_new$create_date <- as.Date(gh_new$created_at, format = "%Y-%m-%d")
+gh_ls$create_date <- as.Date(gh_ls$create_date, format = "%Y-%m-%d")
+gh_new$title <- gh_new$description
+
+gh.to.bind <- gh_new[,c("url", "create_date", "title")]
+gh <- rbind(gh_ls, gh.to.bind)
+write.csv(gh, "data/github_repos.csv", row.names = F)
+

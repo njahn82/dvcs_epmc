@@ -101,4 +101,48 @@ foo <- function(x){
   out <- xpathSApply(x, xp, xmlValue)
   out
 }
-    
+
+## get github metadata (example functions from httr vignette re-used)
+
+github_GET <- function(path, ..., pat = github_pat()) {
+  auth <- github_auth(pat)
+  req <- GET("https://api.github.com/", path = paste0("repos/", path), auth, ...)
+  if (req$status_code < 400) {
+
+    out <- github_parse(req)
+   data <- github_nodes(out)
+  
+  } else { data <- data.frame() }
+  list(status_code = req$status_code, data = data)
+}
+
+# github_check <- function(req) {
+#   if (req$status_code < 400) return(invisible())
+#   
+#   message <- github_parse(req)$message
+#   message
+# }
+
+
+github_auth <- function(pat = github_pat()) {
+  authenticate(pat, "x-oauth-basic", "basic")
+}
+
+github_pat <- function() {
+  Sys.getenv('GITHUB_TOKEN')
+}
+
+has_pat <- function() !identical(github_pat(), "")
+
+github_parse <- function(req) {
+  text <- content(req, as = "text")
+  if (identical(text, "")) stop("Not output to parse", call. = FALSE)
+  jsonlite::fromJSON(text, simplifyVector = FALSE)
+}
+
+github_nodes <- function(out) {
+  tt.ls <- list(full_name = out$full_name, description = out$description, 
+                language = out$language, created_at = out$created_at)
+  tt.ls[sapply(tt.ls, is.null)] <- NA
+  data.frame(tt.ls)
+}
